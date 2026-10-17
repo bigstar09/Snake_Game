@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Snake Battle</title>
+  <style>
+    *{box-sizing:border-box}body{margin:0;background:#fffaf0;color:#253b34;font:14px system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center}
+    main{width:min(1280px,100%);padding:10px 12px}header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:8px}h1{font-size:20px;margin:0;color:#28634f}button{border:1px solid #28634f;border-radius:8px;background:#28634f;color:white;padding:8px 14px;font:inherit;cursor:pointer}button:disabled{opacity:.45;cursor:default}
+    #stage{position:relative;margin:auto;width:min(100%,calc((100vh - 112px)*16/9));aspect-ratio:16/9;background:#fff3d6;border-radius:12px;overflow:hidden;box-shadow:0 2px 16px #253b3420}
+    canvas{display:block;width:100%;height:100%;outline:none}#loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#fff3d6;text-align:center;padding:24px}progress{width:min(320px,80%);accent-color:#28634f}#error{position:absolute;inset:8%;background:#fffaf0;border:2px solid #b34830;border-radius:10px;padding:20px;white-space:pre-wrap;overflow:auto;z-index:3}#error[hidden],#loading[hidden]{display:none}footer{font-size:12px;color:#52695c;line-height:1.6;margin-top:9px;text-align:center}footer span{display:inline-block;margin:0 6px}a{color:inherit}
+    :fullscreen canvas{width:100%;height:100%}
+  </style>
+</head>
+<body>
+ <main>
+  <header><h1>Snake Battle</h1><button id="fullscreen" disabled>전체 화면</button></header>
+  <div id="stage">
+   <canvas id="unity-canvas" width="1280" height="720" tabindex="0" aria-label="Snake Battle 게임"></canvas>
+   <div id="loading" role="status"><strong>게임을 불러오고 있어요.</strong><progress id="progress" max="1" value="0"></progress><span id="load-text">처음 접속할 때는 잠시 기다려 주세요.</span></div>
+   <div id="error" role="alert" hidden></div>
+  </div>
+  <footer><span>방향키: 이동 · ESC: 일시정지</span><span>키가 먹지 않으면 게임 화면을 클릭하세요.</span><br><span>랭킹은 이 브라우저에 저장됩니다.</span><span>폰트: 카페24 써라운드 · 써라운드 에어</span></footer>
+ </main>
+ <script>
+ const canvas=document.querySelector('#unity-canvas'),loading=document.querySelector('#loading'),error=document.querySelector('#error');
+ const full=document.querySelector('#fullscreen');
+ function showError(message){error.hidden=false;error.textContent='게임을 실행하지 못했어요. 새로고침 후 다시 시도해 주세요.\n\n'+message;loading.hidden=true;}
+ const buildUrl='Build';
+ const config={
+  dataUrl:buildUrl+'/Snake_Game.data.unityweb',
+  frameworkUrl:buildUrl+'/Snake_Game.framework.js.unityweb',
+  codeUrl:buildUrl+'/Snake_Game.wasm.unityweb',
+  streamingAssetsUrl:'StreamingAssets',
+  companyName:"DefaultCompany",
+  productName:"SnakeGame",
+  productVersion:"1.0",
+  showBanner:(message,type)=>{if(type==='error')showError(message);else console.warn(message);}
+ };
+ const loader=document.createElement('script');loader.src=buildUrl+'/Snake_Game.loader.js';
+ loader.onerror=()=>showError('게임 파일을 내려받지 못했어요. 네트워크 연결을 확인해 주세요.');
+ loader.onload=()=>createUnityInstance(canvas,config,p=>{document.querySelector('#progress').value=p;document.querySelector('#load-text').textContent=Math.round(p*100)+'%';})
+  .then(instance=>{window.unityInstance=instance;loading.hidden=true;full.disabled=false;full.onclick=()=>{canvas.focus();instance.SetFullscreen(1);};canvas.focus();})
+  .catch(showError);
+ document.body.appendChild(loader);
+ canvas.addEventListener('pointerdown',()=>canvas.focus());
+ canvas.addEventListener('keydown',event=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(event.key))event.preventDefault();});
+ </script>
+</body>
+</html>
